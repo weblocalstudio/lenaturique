@@ -1,0 +1,160 @@
+:root {
+    --accent-color: #00d4ff; /* Un azul eléctrico potente */
+    --bg-dark: #050505;
+    --text-white: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-white);
+    font-family: 'Montserrat', sans-serif;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.background-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, #111 0%, #000 100%);
+    z-index: -1;
+}
+
+.wrapper {
+    text-align: center;
+    padding: 20px;
+}
+
+.main-title {
+    font-family: 'Syncopate', sans-serif;
+    font-size: clamp(1.8rem, 10vw, 4rem);
+    letter-spacing: 12px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.accent {
+    color: var(--accent-color);
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+}
+
+.line {
+    height: 3px;
+    width: 60px;
+    background: var(--accent-color);
+    margin: 25px auto;
+}
+
+.coming-soon {
+    font-size: 1.5rem;
+    letter-spacing: 8px;
+    font-weight: 300;
+    margin-bottom: 15px;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+.description {
+    font-size: 1rem;
+    font-weight: 300;
+    opacity: 0.7;
+    max-width: 500px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+}
+
+.badge {
+    display: inline-block;
+    padding: 10px 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+footer {
+    position: absolute;
+    bottom: 40px;
+    font-size: 0.7rem;
+    opacity: 0.3;
+    letter-spacing: 2px;
+}
+
+/* Animación sutil de brillo */
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px var(--accent-color);
+    }
+    to {
+        text-shadow: 0 0 10px #fff, 0 0 20px var(--accent-color), 0 0 30px var(--accent-color);
+    }
+}
+
+/* --- ESTILOS EXTRA PARA LA PÁGINA 404 --- */
+
+.error-wrapper {
+    text-align: center;
+    padding: 20px;
+}
+
+.error-code {
+    font-family: 'Syncopate', sans-serif;
+    font-size: clamp(5rem, 15vw, 10rem);
+    color: var(--accent-color);
+    letter-spacing: 15px;
+    line-height: 1;
+    animation: floatVapor 4s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.error-wrapper h2 {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 5px;
+    margin: 20px 0 15px;
+}
+
+.btn-back {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 12px 30px;
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+.btn-back:hover {
+    background: var(--accent-color);
+    color: #000;
+    box-shadow: 0 0 20px var(--accent-color);
+}
+
+/* Animación de flotación estilo "vapor" */
+@keyframes floatVapor {
+    0%, 100% {
+        transform: translateY(0);
+        filter: blur(0px);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(-20px);
+        filter: blur(2px);
+        opacity: 1;
+    }
+}
