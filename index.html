@@ -3,31 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yanbal-Products | Tienda Online</title>
+    <title>Yanbal-Products | Tienda Oficial</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
-    <link rel="manifest" href="favicon/site.webmanifest">
-</head>
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/favicon/site.webmanifest">
+    <script src="https://www.paypal.com/sdk/js?client-id=AY08p51kv4T10-_O2iOtMNp_tRh2SjT5cX5auqJThtmA9W5O8qUunH76qK7HpyeRyibgl3UxkenUw0sK&currency=EUR"></script>
 <body>
+
     <nav class="navbar">
-        <div class="logo">YANBAL<span>PRODUCTS</span></div>
+        <div class="nav-container">
+            <div class="logo">YANBAL<span>PRODUCTS</span></div>
+            <div class="nav-icons">
+                <div class="cart-wrapper" id="open-cart-btn">
+                    <span class="cart-icon">🛒</span>
+                    <span class="cart-count" id="cart-count-nav">0</span> 
+                </div>
+            </div>
+        </div>
     </nav>
 
-    <main class="hero">
-        <div class="hero-content">
-            <span class="sub-title">PRÓXIMAMENTE</span>
-            <h1>Calidad y Estilo <br>en cada producto</h1>
-            <p>Estamos trabajando en nuestra nueva plataforma de venta online para ofrecerte la mejor experiencia de compra.</p>
-            <div class="divider"></div>
-            <p class="status-text">Lanzamiento oficial muy pronto</p>
-        </div>
+    <main class="catalog-container">
+        <section class="category-section">
+            <h2 class="category-title">Joyería</h2>
+            <div id="joyeria" class="products-grid"></div>
+        </section>
+
+        <section class="category-section">
+            <h2 class="category-title">Perfumes</h2>
+            <div id="perfumes" class="products-grid"></div>
+        </section>
+
+        <section>
+            <h2>Lociones Faciales</h2>
+            <div id="faciales" class="products-grid"></div>
+        </section>
+
+        <section class="next-season">
+            <div class="season-banner">
+                <h3>PRÓXIMA TEMPORADA</h3>
+                <p>Colección de Verano 2026 próximamente.</p>
+            </div>
+        </section>
     </main>
 
+    <div id="cart-panel" class="cart-sidebar">
+        <div class="cart-header">
+            <h2>Tu Cesta</h2>
+            <button id="close-cart" class="close-btn">&times;</button>
+        </div>
+        <div class="cart-body" id="cart-items-container">
+            </div>
+        <div class="cart-footer">
+            <div class="total-container">
+                <span>Total:</span>
+                <span id="cart-total-price">0.00€</span>
+            </div>
+            <button class="checkout-btn" onclick="pagar()">FINALIZAR COMPRA</button>
+        </div>
+    </div>
+    <div id="cart-overlay" class="overlay"></div>
+
+    <div id="modal-pago" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Finalizar Pedido</h3>
+        <p>Elige tu método de pago seguro:</p>
+        <div id="paypal-button-container"></div>
+    </div>
+</div>
+
     <footer>
-        <p>&copy; 2026 Yanbal-Products - Todos los derechos reservados.</p>
+        <p>&copy; 2026 Yanbal-Products</p>
     </footer>
+
+    <script>
+        // 1. Base de datos de productos
+const productos = [
+    { id: 1, nombre: "Collar Elegance", precio: 45.00, categoria: "joyeria", img: "img/1.png" },
+    { id: 2, nombre: "Perfume Gaia", precio: 62.50, categoria: "perfumes", img: "img/1.png" }, 
+    { id: 3, nombre: "Pendientes Oro", precio: 35.00, categoria: "joyeria", img: "img/1.png" }
+];
+        // 2. El Carrito (La lista de la compra)
+        let carrito = [];
+
+        // 3. Pintar productos en la tienda al cargar la página
+        function pintarProductos() {
+            productos.forEach(producto => {
+                const contenedor = document.getElementById(producto.categoria);
+                if (contenedor) {
+                    contenedor.innerHTML += `
+                        <div class="card">
+                            <img src="${producto.img}" onerror="this.src='img/logo.JPG'" alt="${producto.nombre}">
+                            <h3>${producto.nombre}</h3>
+                            <p>${producto.precio.toFixed(2)}€</p>
+                            <button onclick="agregarAlCarrito(${producto.id})">Añadir</button>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // 4. Función para añadir al carrito
+        function agregarAlCarrito(id) {
+            // Buscamos si ya está en el carrito
+            const existe = carrito.find(item => item.id === id);
+
+            if (existe) {
+                existe.cantidad++;
+            } else {
+                // Buscamos el producto original para copiar sus datos
+                const proOriginal = productos.find(p => p.id === id);
+                carrito.push({ ...proOriginal, cantidad: 1 });
+            }
+
+            renderizarCarrito();
+            abrirCarrito();
+        }
+
+        // 5. Función para eliminar del carrito
+        function eliminarDelCarrito(id) {
+            // Filtramos la lista para quitar el producto con ese ID
+            carrito = carrito.filter(item => item.id !== id);
+            renderizarCarrito();
+        }
+
+        // 6. Dibujar el carrito en el panel lateral
+function renderizarCarrito() {
+    const container = document.getElementById('cart-items-container');
+    const totalElement = document.getElementById('cart-total-price');
+    const countNav = document.getElementById('cart-count-nav');
+    
+    // 1. Limpiamos el contenedor para que no se dupliquen los productos
+    container.innerHTML = ""; 
+
+    let subtotalProductos = 0;
+    let unidadesTotales = 0;
+    let costeEnvioPorUnidad = 1.00; // Lo que hablábamos por el peso de perfumes/joyas
+
+    // 2. Si la cesta está vacía, mostramos el mensaje
+    if (carrito.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Tu cesta está vacía.</p>';
+        totalElement.textContent = "0.00€";
+        countNav.textContent = "0";
+        // Si tienes el botón de PayPal, podrías ocultarlo aquí si quieres
+        return; 
+    }
+
+    // 3. Recorremos el carrito para dibujar cada fila y calcular precios
+    carrito.forEach(item => {
+        const precioLinea = item.precio * item.cantidad;
+        subtotalProductos += precioLinea;
+        unidadesTotales += item.cantidad;
+
+        container.innerHTML += `
+            <div class="cart-item">
+                <img src="${item.img}" onerror="this.src='img/logo.JPG'" class="cart-item-img">
+                <div class="cart-item-info">
+                    <h4 class="cart-item-title">${item.nombre}</h4>
+                    <p class="cart-item-price">${item.precio.toFixed(2)}€</p>
+                    <div class="cart-item-quantity">
+                        <span>Cantidad: ${item.cantidad}</span>
+                    </div>
+                </div>
+                <button class="remove-btn" onclick="eliminarDelCarrito(${item.id})">&times;</button>
+            </div>
+        `;
+    });
+
+    // 4. CÁLCULO DE GASTOS DE ENVÍO
+    // Multiplicamos las unidades totales por el coste de envío (2€ por producto)
+    let totalGastosEnvio = unidadesTotales * costeEnvioPorUnidad;
+    
+    // 5. TOTAL FINAL (Lo que cobraremos en PayPal)
+    // Guardamos este valor en una variable global para que el botón de PayPal la lea
+    window.totalFinalVenta = subtotalProductos + totalGastosEnvio;
+
+    // 6. ACTUALIZAMOS LA VISTA
+    // Actualizamos el número de la burbuja del carrito
+    countNav.textContent = unidadesTotales;
+    
+    // Actualizamos el precio total en el HTML
+    // He añadido un detalle de "Envío incluido" para que el cliente lo vea claro
+    totalElement.innerHTML = `
+        <div style="font-size: 0.8rem; color: #888; font-weight: normal;">
+            Productos: ${subtotalProductos.toFixed(2)}€<br>
+            Envío: ${totalGastosEnvio.toFixed(2)}€
+        </div>
+        ${window.totalFinalVenta.toFixed(2)}€
+    `;
+    const btnFinalizar = document.querySelector('.checkout-btn');
+if (carrito.length === 0) {
+    btnFinalizar.disabled = true;
+    btnFinalizar.style.opacity = "0.5"; // Para que se vea gris
+    btnFinalizar.style.cursor = "not-allowed";
+} else {
+    btnFinalizar.disabled = false;
+    btnFinalizar.style.opacity = "1";
+    btnFinalizar.style.cursor = "pointer";
+}
+}
+
+        // 7. Funciones de apertura/cierre
+        function abrirCarrito() {
+            document.getElementById('cart-panel').classList.add('open');
+            document.getElementById('cart-overlay').classList.add('active');
+        }
+
+        function cerrarCarrito() {
+            document.getElementById('cart-panel').classList.remove('open');
+            document.getElementById('cart-overlay').classList.remove('active');
+        }
+
+        // Eventos
+        document.getElementById('open-cart-btn').addEventListener('click', abrirCarrito);
+        document.getElementById('close-cart').addEventListener('click', cerrarCarrito);
+        document.getElementById('cart-overlay').addEventListener('click', cerrarCarrito);
+
+
+        function pagar(){
+            // Seleccionamos los elementos
+const modal = document.getElementById('modal-pago');
+const btnCheckout = document.querySelector('.checkout-btn');
+const spanClose = document.getElementsByClassName('close-modal')[0];
+
+// Al darle a finalizar compra, abrimos el cartel
+btnCheckout.onclick = function() {
+    modal.style.display = "block";
+    cerrarCarrito(); // Cerramos el panel lateral para que no moleste
+}
+
+// Al darle a la X, cerramos el cartel
+spanClose.onclick = function() {
+    modal.style.display = "none";
+}
+
+// Si hacen clic fuera del cartel, también se cierra
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+        }
+        // Iniciar la web
+        pintarProductos();
+        renderizarCarrito();
+
+        paypal.Buttons({
+    // 1. CONFIGURAR EL PAGO
+    createOrder: function(data, actions) {
+        // Usamos la variable totalFinalVenta que creamos en el renderizarCarrito
+        if (!window.totalFinalVenta || window.totalFinalVenta <= 0) {
+            alert("Tu cesta está vacía");
+            return;
+        }
+
+        return actions.order.create({
+            purchase_units: [{
+                amount: {
+                    value: window.totalFinalVenta.toFixed(2) // El precio total con envío
+                },
+                shipping: {
+                    type: "SHIPPING" // Esto obliga a PayPal a pedir la dirección de envío
+                }
+            }]
+        });
+    },
+
+    // 2. ¿QUÉ PASA CUANDO EL CLIENTE PAGA?
+    onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+            // 'details' contiene toda la info: nombre, dirección, etc.
+            alert('¡Gracias ' + details.payer.name.given_name + '! Pago realizado con éxito.');
+            
+            console.log("Datos de envío completos:", details.purchase_units[0].shipping.address);
+            
+            // Aquí puedes vaciar el carrito
+            carrito = [];
+            renderizarCarrito();
+            cerrarCarrito();
+        });
+    },
+
+    // 3. SI EL USUARIO CANCELA
+    onCancel: function (data) {
+        alert("Pago cancelado. Los productos siguen en tu cesta.");
+    }
+    }).render('#paypal-button-container'); // Aquí indicamos dónde dibujar el botón
+    </script>
 </body>
 </html>
