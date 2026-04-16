@@ -390,3 +390,139 @@ footer {
     right: 20px; top: 10px;
     font-size: 28px; cursor: pointer;
 }
+
+/* --- SECCIÓN DE USUARIO (Barra superior) --- */
+.login-section {
+    background-color: #f4f4f4;
+    padding: 8px 20px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid #ddd;
+    font-family: 'Montserrat', sans-serif;
+}
+
+#user-welcome {
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 600;
+}
+
+/* --- BOTÓN INICIAR SESIÓN --- */
+#btn-login-modal {
+    background: transparent;
+    border: 1px solid #333;
+    padding: 5px 15px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#btn-login-modal:hover {
+    background: #333;
+    color: white;
+}
+
+/* --- BOTÓN ADMIN (El que aparece y desaparece) --- */
+#admin-btn {
+    display: none; /* Se activa por JS */
+    background-color: #8b0000; /* Rojo vino elegante */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background 0.3s;
+}
+
+#admin-btn:hover {
+    background-color: #b30000;
+    transform: translateY(-1px);
+}
+
+#admin-btn:active {
+    transform: translateY(0);
+}
+
+/* --- ESTILO EXTRA PARA EL FORMULARIO DE LOGIN --- */
+.modal-content h3 {
+    font-family: 'Playfair Display', serif;
+    margin-bottom: 20px;
+    color: #d4af37; /* Dorado */
+}
+
+.modal-content input {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+}
+
+.modal-content input:focus {
+    border-color: #d4af37;
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+}
+
+.modal-content button {
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: background 0.3s;
+}
+
+.modal-content button:hover {
+    background: #000;
+}
+
+/* Cuando el input está bloqueado (verificando) */
+input:disabled {
+    background-color: #eee !important;
+    color: #999;
+    cursor: not-allowed;
+    border: 1px solid #ccc;
+}
+
+/* Botón cuando está cargando */
+button:disabled {
+    background-color: #555 !important;
+    cursor: wait;
+    opacity: 0.7;
+}
+
+/* Mejoras visuales al modal de Login */
+.modal-content {
+    border: 2px solid #d4af37; /* Borde dorado Yanbal */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+#auth-inputs input {
+    display: block;
+    width: 90%;
+    margin: 10px auto;
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+#btn-logout {
+    border: 1px solid #d4af37 !important;
+    color: #d4af37 !important;
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 4px 8px;
+    transition: 0.3s;
+}
+
+#btn-logout:hover {
+    background-color: #d4af37 !important;
+    color: white !important;
+}

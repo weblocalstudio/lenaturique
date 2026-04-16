@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Yanbal Admin | Gestión Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/favicon/site.webmanifest">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background: #f4f4f4; padding: 20px; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; display: flex; justify-content: center; align-items: center; z-index: 100; }
+        .login-box { background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .admin-container { max-width: 1100px; margin: 0 auto; display: none; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-top: 20px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #d4af37; color: white; }
+        
+        .form-group { background: white; padding: 25px; border-radius: 12px; margin-bottom: 30px; border-left: 5px solid #d4af37; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        button { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: 600; transition: 0.3s; }
+        
+        .btn-add { background: #27ae60; color: white; }
+        .btn-edit { background: #2980b9; color: white; margin-right: 5px; }
+        .btn-delete { background: #c0392b; color: white; }
+        button:disabled { background: #ccc !important; cursor: wait; }
+
+        .btn-volver{
+            transition: 0.3s;
+            position: fixed; 
+            top: 20px; 
+            left: 20px; 
+            z-index: 5000; 
+            background: #333; 
+            color: white; 
+            border: 1px solid #d4af37; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-family: 'Montserrat'; 
+            font-weight: 600;
+        }
+
+        .btn-volver:hover{
+            border: 1px solid white;
+            background-color: #d4af37;
+            transition: 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <button id="btn-volver" onclick="volverTienda()" class="btn-volver">
+        ← Volver a la Tienda
+    </button>
+    <div id="admin-auth" class="login-overlay">
+        <div class="login-box">
+            <h2 style="color:#d4af37; margin-bottom:20px;">Acceso Restringido</h2>
+            <input type="email" id="admin-user" placeholder="Email"><br>
+            <input type="password" id="admin-pass" placeholder="Contraseña"><br><br>
+            <button id="btn-entrar" onclick="validarAdmin()">Entrar al Panel</button>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="admin-container">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Panel de Inventario</h1>
+            <button onclick="location.reload()" style="background:#eee; color:#333;">Cerrar Sesión</button>
+        </div>
+        
+        <div class="form-group" id="form-producto">
+            <h3 id="form-title">Añadir Nuevo Producto</h3>
+            <input type="hidden" id="edit-id"> <input type="text" id="p-nombre" placeholder="Nombre del Producto" style="width:300px;">
+            <input type="number" id="p-precio" placeholder="Precio (€)" step="0.01">
+            <select id="p-cat">
+                <option value="joyeria">Joyería</option>
+                <option value="perfumes">Perfumes</option>
+                <option value="faciales">Faciales</option>
+            </select>
+            <button class="btn-add" id="btn-confirmar" onclick="gestionarProducto('add')">Confirmar Registro</button>
+            <button id="btn-cancelar" onclick="limpiarFormulario()" style="display:none; background:#999; color:white;">Cancelar</button>
+        </div>
+
+        <table id="tabla-productos">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Vista</th><th>Nombre</th><th>Precio</th><th>Categoría</th><th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="lista-productos"></tbody>
+        </table>
+    </div>
+
+    <footer>
+        <p>Puede que tarde un timepo en cargar el inventario</p>
+    </footer>
+    <script>
+        
+        function volverTienda() {
+            window.location.href = "../"; 
+        }
+
+        const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyUnpvDiuir3Tt26UzP8FM9eGQ_6AtfbqMsVIinnOW83KzS_QPihb5jGx5A6Yv_h5jm/exec";
+
+        // 1. VALIDACIÓN CON BLOQUEO
+        async function validarAdmin() {
+            const btn = document.getElementById('btn-entrar');
+            const user = document.getElementById('admin-user');
+            const pass = document.getElementById('admin-pass');
+
+            btn.disabled = true;
+            btn.textContent = "Verificando...";
+
+            try {
+                const res = await fetch(URL_APPS_SCRIPT, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'login', email: user.value, password: pass.value })
+                });
+                const data = await res.json();
+
+                if (data.success && data.rol === 'admin') {
+                    document.getElementById('admin-auth').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'block';
+                    cargarProductosAdmin();
+                } else {
+                    alert("Acceso denegado. Solo administradores autorizados.");
+                    btn.disabled = false;
+                    btn.textContent = "Entrar al Panel";
+                }
+            } catch (e) {
+                alert("Error de conexión.");
+                btn.disabled = false;
+                btn.textContent = "Entrar al Panel";
+            }
+        }
+
+        // 2. CARGAR TABLA
+        async function cargarProductosAdmin() {
+            const res = await fetch(URL_APPS_SCRIPT + "?action=getProducts");
+            const productos = await res.json();
+            const tbody = document.getElementById('lista-productos');
+            tbody.innerHTML = "";
+
+            productos.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>#${p.id}</strong></td>
+                        <td><img src="../${p.img}" width="40" style="border-radius:4px;" onerror="this.src='../img/logo.JPG'"></td>
+                        <td>${p.nombre}</td>
+                        <td>${p.precio.toFixed(2)}€</td>
+                        <td>${p.categoria}</td>
+                        <td>
+                            <button class="btn-edit" onclick="prepararEdicion(${p.id}, '${p.nombre}', ${p.precio}, '${p.categoria}')">Editar</button>
+                            <button class="btn-delete" onclick="gestionarProducto('delete', ${p.id})">Borrar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 3. AÑADIR / EDITAR / BORRAR
+        async function gestionarProducto(subAction, idDirecto = null) {
+            const btn = document.getElementById('btn-confirmar');
+            const id = idDirecto || document.getElementById('edit-id').value;
+            
+            const payload = {
+                action: "updateInventory",
+                subAction: subAction,
+                id: id,
+                nombre: document.getElementById('p-nombre').value,
+                precio: document.getElementById('p-precio').value,
+                categoria: document.getElementById('p-cat').value
+            };
+
+            if (subAction !== 'delete' && (!payload.nombre || !payload.precio)) return alert("Rellena los datos");
+
+            btn.disabled = true;
+            await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) });
+            
+            alert("Inventario actualizado correctamente");
+            limpiarFormulario();
+            cargarProductosAdmin();
+            btn.disabled = false;
+        }
+
+        // 4. MODO EDICIÓN
+        function prepararEdicion(id, nombre, precio, cat) {
+            document.getElementById('form-title').textContent = "Editando Producto #" + id;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('p-nombre').value = nombre;
+            document.getElementById('p-precio').value = precio;
+            document.getElementById('p-cat').value = cat;
+            
+            const btn = document.getElementById('btn-confirmar');
+            btn.textContent = "Guardar Cambios";
+            btn.className = "btn-edit";
+            btn.onclick = () => gestionarProducto('edit');
+            
+            document.getElementById('btn-cancelar').style.display = "inline-block";
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('form-title').textContent = "Añadir Nuevo Producto";
+            document.getElementById('edit-id').value = "";
+            document.getElementById('p-nombre').value = "";
+            document.getElementById('p-precio').value = "";
+            document.getElementById('btn-confirmar').textContent = "Confirmar Registro";
+            document.getElementById('btn-confirmar').className = "btn-add";
+            document.getElementById('btn-confirmar').onclick = () => gestionarProducto('add');
+            document.getElementById('btn-cancelar').style.display = "none";
+        }
+    </script>
+</body>
+</html>
