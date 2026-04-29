@@ -10,8 +10,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
     <link rel="manifest" href="/favicon/site.webmanifest">
-    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=EUR"></script>
-
+    <script src="https://www.paypal.com/sdk/js?client-id=AY08p51kv4T10-_O2iOtMNp_tRh2SjT5cX5auqJThtmA9W5O8qUunH76qK7HpyeRyibgl3UxkenUw0sK&currency=EUR"></script>
     <style>
         /* Estilos críticos para el funcionamiento de los botones y bloqueo */
         #loader {
@@ -102,6 +101,10 @@
             <h2 class="category-title">Lociones Faciales</h2>
             <div id="faciales" class="products-grid"></div>
         </section>
+        <section class="category-section">
+            <h2 class="category-title">Lociones Corporales</h2>
+            <div id="corporal" class="products-grid"></div>
+        </section>
     </main>
 
     <div id="cart-panel" class="cart-sidebar">
@@ -154,7 +157,6 @@ let isRegisterMode = false;
 
 // --- 1. CARGA INICIAL Y PERSISTENCIA ---
 async function cargarTienda() {
-    // Intentar recuperar sesión guardada en el navegador
     const sesionGuardada = localStorage.getItem('yanbal_user');
     if (sesionGuardada) {
         usuarioActual = JSON.parse(sesionGuardada);
@@ -166,7 +168,6 @@ async function cargarTienda() {
         productos = await res.json();
         pintarProductos();
         
-        // Ocultar pantalla de carga
         const loader = document.getElementById('loader');
         loader.style.opacity = "0";
         setTimeout(() => loader.style.display = "none", 500);
@@ -184,34 +185,45 @@ function aplicarInterfazUsuario(user) {
     const btnAdmin = document.getElementById('admin-btn');
     if (user.rol === 'admin') {
         btnAdmin.style.display = 'inline-block';
+        btnAdmin.onclick = abrirAdmin;
     } else {
-        if (btnAdmin) btnAdmin.remove(); // Seguridad: eliminar el elemento del DOM
+        if (btnAdmin) btnAdmin.remove();
     }
 }
 
 function cerrarSesion() {
     localStorage.removeItem('yanbal_user');
-    location.reload(); // Recarga para limpiar estados
+    location.reload();
 }
 
-// --- 2. DIBUJAR PRODUCTOS ---
+// --- 2. DIBUJAR PRODUCTOS (CON MENSAJE DE CATEGORÍA VACÍA) ---
 function pintarProductos() {
-    document.querySelectorAll('.products-grid').forEach(g => g.innerHTML = "");
-    productos.forEach(p => {
-        const container = document.getElementById(p.categoria);
-        if(container) {
-            container.innerHTML += `
-                <div class="card">
-                    <img src="${p.img}" onerror="this.src='img/logo.JPG'">
-                    <h3>${p.nombre}</h3>
-                    <p>${p.precio.toFixed(2)}€</p>
-                    <button onclick="agregarAlCarrito(${p.id})">Añadir</button>
-                </div>`;
+    const categorias = ['joyeria', 'perfumes', 'faciales', 'corporal'];
+    
+    categorias.forEach(cat => {
+        const container = document.getElementById(cat);
+        if(!container) return;
+        
+        container.innerHTML = "";
+        const productosCategoria = productos.filter(p => p.categoria === cat);
+        
+        if (productosCategoria.length === 0) {
+            container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #888; padding: 20px;">Actualmente no hay productos disponibles en esta categoría.</p>`;
+        } else {
+            productosCategoria.forEach(p => {
+                container.innerHTML += `
+                    <div class="card">
+                        <img src="${p.img}" onerror="this.src='img/logo.JPG'">
+                        <h3>${p.nombre}</h3>
+                        <p>${p.precio.toFixed(2)}€</p>
+                        <button onclick="agregarAlCarrito(${p.id})">Añadir</button>
+                    </div>`;
+            });
         }
     });
 }
 
-// --- 3. LÓGICA DE AUTH (LOGIN / REGISTRO) ---
+// --- 3. LÓGICA DE AUTH ---
 function mostrarModalLogin() { document.getElementById('modal-login').style.display = 'block'; }
 function cerrarModalLogin() { document.getElementById('modal-login').style.display = 'none'; }
 
@@ -229,9 +241,7 @@ async function ejecutarAuth() {
     const nomInp = document.getElementById('reg-nombre');
     const btn = document.getElementById('btn-auth-submit');
 
-    // Bloquear controles durante la verificación
     [emailInp, passInp, nomInp, btn].forEach(el => el.disabled = true);
-    const originalText = btn.textContent;
     btn.textContent = "Verificando...";
 
     try {
@@ -252,7 +262,7 @@ async function ejecutarAuth() {
                 toggleAuthMode();
             } else {
                 usuarioActual = data;
-                localStorage.setItem('yanbal_user', JSON.stringify(data)); // Guardar sesión
+                localStorage.setItem('yanbal_user', JSON.stringify(data));
                 aplicarInterfazUsuario(data);
                 cerrarModalLogin();
             }
@@ -267,7 +277,7 @@ async function ejecutarAuth() {
     }
 }
 
-// --- 4. CARRITO ---
+// --- 4. CARRITO (GASTOS ENVÍO 0.50€ Y BOTÓN PAPELERA) ---
 function agregarAlCarrito(id) {
     const prod = productos.find(p => p.id == id);
     const enCarrito = carrito.find(x => x.id == id);
@@ -280,27 +290,67 @@ function renderizarCarrito() {
     const cont = document.getElementById('cart-items-container');
     cont.innerHTML = "";
     let sub = 0, unis = 0;
+
     carrito.forEach(item => {
         sub += item.precio * item.cantidad;
         unis += item.cantidad;
         cont.innerHTML += `
-            <div class="cart-item">
-                <div><strong>${item.nombre}</strong> (x${item.cantidad})</div>
-                <div>${(item.precio * item.cantidad).toFixed(2)}€</div>
+            <div class="cart-item" style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="max-width: 70%;">${item.nombre}</strong>
+                    <span>${(item.precio * item.cantidad).toFixed(2)}€</span>
+                </div>
+                <div class="quantity-controls" style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                    <button onclick="modificarCantidad(${item.id}, -1)" style="width:25px; height:25px; cursor:pointer; background:#eee; border:none; border-radius:3px;">-</button>
+                    <input type="number" value="${item.cantidad}" 
+                           onchange="cambiarCantidadManual(${item.id}, this.value)" 
+                           style="width: 40px; text-align: center; border: 1px solid #ddd; border-radius: 3px;">
+                    <button onclick="modificarCantidad(${item.id}, 1)" style="width:25px; height:25px; cursor:pointer; background:#eee; border:none; border-radius:3px;">+</button>
+                    
+                    <button onclick="eliminarDelCarrito(${item.id})" title="Eliminar" style="margin-left: auto; background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0 5px;">
+                        🗑️
+                    </button>
+                </div>
             </div>`;
     });
-    let envio = unis * 2;
+
+    let envio = unis * 0.50; // Gastos de envío: 50 céntimos por producto
     window.totalFinalVenta = sub + envio;
-    document.getElementById('cart-total-price').textContent = `Envío: ${envio.toFixed(2)}€ | Total: ${window.totalFinalVenta.toFixed(2)}€`;
+    document.getElementById('cart-total-price').innerHTML = `
+        <div style="font-size: 0.9rem; color: #555;">Envío (0.50€/ud): ${envio.toFixed(2)}€</div>
+        <div style="font-size: 1.1rem; font-weight: bold; margin-top: 5px;">Total: ${window.totalFinalVenta.toFixed(2)}€</div>
+    `;
     document.getElementById('cart-count-nav').textContent = unis;
     document.getElementById('btn-checkout').disabled = carrito.length === 0;
 }
 
-function abrirAdmin() {
-    window.location.href = "admin"
+function modificarCantidad(id, cambio) {
+    const item = carrito.find(x => x.id === id);
+    if (item) {
+        item.cantidad += cambio;
+        if (item.cantidad <= 0) eliminarDelCarrito(id);
+        else renderizarCarrito();
+    }
 }
 
-// --- 5. PAYPAL Y MODAL PAGO ---
+function cambiarCantidadManual(id, valor) {
+    const item = carrito.find(x => x.id === id);
+    const nuevaCantidad = parseInt(valor);
+    if (item && nuevaCantidad > 0) item.cantidad = nuevaCantidad;
+    else if (nuevaCantidad <= 0) eliminarDelCarrito(id);
+    renderizarCarrito();
+}
+
+function eliminarDelCarrito(id) {
+    carrito = carrito.filter(item => item.id !== id);
+    renderizarCarrito();
+}
+
+function abrirAdmin() {
+    window.location.href = "admin";
+}
+
+// --- 5. PAYPAL ---
 function cerrarModalPago() { document.getElementById('modal-pago').style.display = 'none'; }
 
 document.getElementById('btn-checkout').onclick = () => {
@@ -338,7 +388,6 @@ document.getElementById('open-cart-btn').onclick = abrirCarrito;
 document.getElementById('close-cart').onclick = cerrarCarrito;
 document.getElementById('cart-overlay').onclick = cerrarCarrito;
 
-// INICIO DE LA APLICACIÓN
 cargarTienda();
     </script>
 </body>

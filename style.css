@@ -526,3 +526,71 @@ button:disabled {
     background-color: #d4af37 !important;
     color: white !important;
 }
+
+/* Contenedor de controles de cantidad */
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.quantity-controls button {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: 1px solid #d4af37;
+    background: white;
+    color: #d4af37;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-controls button:hover {
+    background: #d4af37;
+    color: white;
+}
+
+.quantity-input {
+    width: 40px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Montserrat';
+}
+
+.btn-remove-item {
+    background: none;
+    border: none;
+    color: #c0392b;
+    cursor: pointer;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    margin-left: auto;
+}
+
+/* Quitar flechas en Chrome, Safari, Edge y Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Quitar flechas en Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Estilo para que el input se vea limpio */
+.quantity-input {
+    width: 40px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    font-family: 'Montserrat', sans-serif;
+    background: transparent;
+}
