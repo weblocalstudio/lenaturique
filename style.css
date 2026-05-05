@@ -594,3 +594,46 @@ input[type=number] {
     font-family: 'Montserrat', sans-serif;
     background: transparent;
 }
+
+/* Estilos para el Cupón */
+.coupon-container {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ddd;
+    display: flex;
+    gap: 5px;
+}
+
+.coupon-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Montserrat', sans-serif;
+    text-transform: uppercase; /* Los cupones suelen ser en mayúsculas */
+}
+
+.btn-apply-coupon {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-apply-coupon:hover {
+    background: #d4af37;
+}
+
+.discount-msg {
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: none; /* Se activa por JS */
+}
+
+.discount-active {
+    color: #27ae60;
+    font-weight: bold;
+}

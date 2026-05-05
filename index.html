@@ -107,16 +107,32 @@
         </section>
     </main>
 
-    <div id="cart-panel" class="cart-sidebar">
+<div id="cart-panel" class="cart-sidebar">
         <div class="cart-header">
             <h2>Tu Cesta</h2>
             <button id="close-cart" class="close-btn">&times;</button>
         </div>
-        <div class="cart-body" id="cart-items-container"></div>
+        
+        <div class="cart-body" id="cart-items-container">
+            <!-- Aquí se cargan los productos -->
+        </div>
+
         <div class="cart-footer">
-            <div class="total-container">
-                <span id="cart-total-price">Total: 0.00€</span>
+            <!-- SECCIÓN DE CUPÓN -->
+            <div class="coupon-container" style="display: flex; gap: 5px; margin-bottom: 10px; padding: 10px 0; border-top: 1px solid #eee;">
+                <input type="text" id="coupon-code" class="coupon-input" placeholder="CÓDIGO" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <button class="btn-apply-coupon" onclick="aplicarCupon()" style="background: #333; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Aplicar</button>
             </div>
+            <div id="coupon-message" class="discount-msg" style="font-size: 0.8rem; margin-bottom: 10px; display: none;"></div>
+            
+            <!-- SECCIÓN DE TOTALES -->
+            <div class="total-container">
+                <div id="cart-total-price">
+                    <!-- Aquí el JavaScript inyectará el Subtotal, Descuento, Envío y Total -->
+                    Total: 0.00€
+                </div>
+            </div>
+            
             <button class="checkout-btn" id="btn-checkout">FINALIZAR COMPRA</button>
         </div>
     </div>
@@ -286,14 +302,82 @@ function agregarAlCarrito(id) {
     abrirCarrito();
 }
 
+let descuentoPorcentaje = 0; // Global para guardar el descuento
+
+async function aplicarCupon() {
+    const input = document.getElementById('coupon-code');
+    const btn = document.querySelector('.btn-apply-coupon'); // Seleccionamos el botón
+    const msg = document.getElementById('coupon-message');
+    const codigo = input.value.trim().toUpperCase();
+
+    if (!codigo) return;
+    if (!usuarioActual) {
+        alert("Debes iniciar sesión para usar cupones.");
+        return;
+    }
+
+    // --- ESTADO DE CARGA ---
+    // Guardamos el texto original para restaurarlo si hay error
+    const textoOriginalBtn = btn.textContent;
+    
+    // Desactivamos controles
+    input.disabled = true;
+    btn.disabled = true;
+    btn.textContent = "Verificando...";
+    msg.style.display = "block";
+    msg.textContent = "Consultando código...";
+    msg.style.color = "#888";
+
+    try {
+        const url = `${URL_APPS_SCRIPT}?action=checkCoupon&code=${encodeURIComponent(codigo)}&email=${encodeURIComponent(usuarioActual.email)}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.success) {
+            descuentoPorcentaje = data.pct;
+            msg.textContent = `¡Cupón aplicado! Descuento del ${descuentoPorcentaje}%`;
+            msg.style.color = "#27ae60"; // Verde éxito
+            
+            // Dejamos el botón desactivado con un mensaje de éxito
+            btn.textContent = "¡Aplicado!";
+            btn.style.backgroundColor = "#27ae60";
+            
+            renderizarCarrito(); 
+        } else {
+            // ERROR: El cupón no es válido o está caducado
+            descuentoPorcentaje = 0;
+            msg.textContent = data.msg;
+            msg.style.color = "red";
+            
+            // Reactivamos para que el usuario pueda intentar con otro código
+            input.disabled = false;
+            btn.disabled = false;
+            btn.textContent = textoOriginalBtn;
+        }
+    } catch (e) {
+        console.error("Error cupón:", e);
+        alert("Error de conexión con el servidor.");
+        
+        // Restauramos en caso de fallo crítico de red
+        input.disabled = false;
+        btn.disabled = false;
+        btn.textContent = textoOriginalBtn;
+        msg.style.display = "none";
+    }
+}
+
+
+// ACTUALIZACIÓN DE LA FUNCIÓN RENDERIZAR CARRITO
 function renderizarCarrito() {
     const cont = document.getElementById('cart-items-container');
     cont.innerHTML = "";
-    let sub = 0, unis = 0;
+    let subtotal = 0;
+    let unidadesTotales = 0;
 
     carrito.forEach(item => {
-        sub += item.precio * item.cantidad;
-        unis += item.cantidad;
+        subtotal += item.precio * item.cantidad;
+        unidadesTotales += item.cantidad;
         cont.innerHTML += `
             <div class="cart-item" style="border-bottom: 1px solid #eee; padding: 10px 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -301,26 +385,36 @@ function renderizarCarrito() {
                     <span>${(item.precio * item.cantidad).toFixed(2)}€</span>
                 </div>
                 <div class="quantity-controls" style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
-                    <button onclick="modificarCantidad(${item.id}, -1)" style="width:25px; height:25px; cursor:pointer; background:#eee; border:none; border-radius:3px;">-</button>
-                    <input type="number" value="${item.cantidad}" 
-                           onchange="cambiarCantidadManual(${item.id}, this.value)" 
-                           style="width: 40px; text-align: center; border: 1px solid #ddd; border-radius: 3px;">
-                    <button onclick="modificarCantidad(${item.id}, 1)" style="width:25px; height:25px; cursor:pointer; background:#eee; border:none; border-radius:3px;">+</button>
-                    
-                    <button onclick="eliminarDelCarrito(${item.id})" title="Eliminar" style="margin-left: auto; background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0 5px;">
-                        🗑️
-                    </button>
+                    <button onclick="modificarCantidad(${item.id}, -1)">-</button>
+                    <input type="number" value="${item.cantidad}" onchange="cambiarCantidadManual(${item.id}, this.value)" class="quantity-input">
+                    <button onclick="modificarCantidad(${item.id}, 1)">+</button>
+                    <button onclick="eliminarDelCarrito(${item.id})" style="margin-left: auto; background: none; border: none; cursor: pointer;">🗑️</button>
                 </div>
             </div>`;
     });
 
-    let envio = unis * 0.50; // Gastos de envío: 50 céntimos por producto
-    window.totalFinalVenta = sub + envio;
-    document.getElementById('cart-total-price').innerHTML = `
-        <div style="font-size: 0.9rem; color: #555;">Envío (0.50€/ud): ${envio.toFixed(2)}€</div>
-        <div style="font-size: 1.1rem; font-weight: bold; margin-top: 5px;">Total: ${window.totalFinalVenta.toFixed(2)}€</div>
+    // CÁLCULOS
+    let montoDescuento = subtotal * (descuentoPorcentaje / 100);
+    let subtotalConDescuento = subtotal - montoDescuento;
+    let envio = unidadesTotales * 0.50; 
+    window.totalFinalVenta = subtotalConDescuento + envio;
+
+    // RENDERIZADO DE TOTALES
+    let htmlTotales = `
+        <div style="font-size: 0.9rem; color: #555;">Subtotal: ${subtotal.toFixed(2)}€</div>
     `;
-    document.getElementById('cart-count-nav').textContent = unis;
+
+    if (descuentoPorcentaje > 0) {
+        htmlTotales += `<div style="font-size: 0.9rem; color: #27ae60;">Descuento (${descuentoPorcentaje}%): -${montoDescuento.toFixed(2)}€</div>`;
+    }
+
+    htmlTotales += `
+        <div style="font-size: 0.9rem; color: #555;">Envío (0.50€/ud): ${envio.toFixed(2)}€</div>
+        <div style="font-size: 1.1rem; font-weight: bold; margin-top: 5px; border-top: 1px solid #333; pt: 5px;">Total: ${window.totalFinalVenta.toFixed(2)}€</div>
+    `;
+
+    document.getElementById('cart-total-price').innerHTML = htmlTotales;
+    document.getElementById('cart-count-nav').textContent = unidadesTotales;
     document.getElementById('btn-checkout').disabled = carrito.length === 0;
 }
 
@@ -364,14 +458,42 @@ paypal.Buttons({
             purchase_units: [{ amount: { value: window.totalFinalVenta.toFixed(2) } }]
         });
     },
-    onApprove: (data, actions) => {
-        return actions.order.capture().then(det => {
-            alert("¡Pago realizado con éxito, " + det.payer.name.given_name + "!");
-            carrito = []; 
-            renderizarCarrito(); 
-            cerrarModalPago();
-        });
-    }
+// --- BUSCA paypal.Buttons en tu index.html ---
+// Busca donde tienes configurado paypal.Buttons
+onApprove: (data, actions) => {
+    return actions.order.capture().then(async (det) => {
+        
+        // --- REGISTRO DEL CUPÓN EN GOOGLE SHEETS ---
+        const inputCupon = document.getElementById('coupon-code');
+        const codigoParaRegistrar = inputCupon ? inputCupon.value.trim().toUpperCase() : "";
+
+        if (descuentoPorcentaje > 0 && codigoParaRegistrar) {
+            try {
+                // Llamamos al doPost para registrar el uso
+                await fetch(URL_APPS_SCRIPT, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: "useCoupon",
+                        code: codigoParaRegistrar,
+                        email: usuarioActual.email
+                    })
+                });
+            } catch (e) {
+                console.error("No se pudo registrar el uso del cupón:", e);
+            }
+        }
+
+        // --- FINALIZAR PROCESO ---
+        alert("¡Pago realizado con éxito, " + det.payer.name.given_name + "!");
+        carrito = []; 
+        descuentoPorcentaje = 0;
+        renderizarCarrito(); 
+        cerrarModalPago();
+        
+        // Opcional: Recargar la página para limpiar todo el estado
+        setTimeout(() => location.reload(), 2000);
+    });
+}
 }).render('#paypal-button-container');
 
 // --- HELPERS INTERFAZ ---
