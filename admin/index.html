@@ -20,7 +20,8 @@
         th { background: #d4af37; color: white; }
         
         .form-group { background: white; padding: 25px; border-radius: 12px; margin-bottom: 30px; border-left: 5px solid #d4af37; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 15px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; box-sizing: border-box; }
         button { cursor: pointer; padding: 10px 20px; border: none; border-radius: 5px; font-weight: 600; transition: 0.3s; }
         
         .btn-add { background: #27ae60; color: white; }
@@ -51,89 +52,35 @@
         }
 
         /* Ajustes generales para móvil */
-    @media (max-width: 768px) {
-        body {
-            padding: 10px;
-        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .admin-container { width: 100%; }
+            .form-row { flex-direction: column; align-items: stretch; }
+            input, select, .form-group button, .file-box label { width: 100% !important; margin: 5px 0; box-sizing: border-box; }
 
-        .admin-container {
-            width: 100%;
-        }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { border: 1px solid #ddd; margin-bottom: 15px; background: white; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+            td { border: none; position: relative; padding-left: 50% !important; text-align: right; }
+            td:before { position: absolute; left: 10px; width: 45%; padding-right: 10px; white-space: nowrap; text-align: left; font-weight: bold; color: #d4af37; }
 
-        /* Hacer que el formulario ocupe todo el ancho */
-        input, select, .form-group button {
-            width: 100% !important;
-            margin: 5px 0;
-            box-sizing: border-box;
-        }
+            td:nth-of-type(1):before { content: "ID"; }
+            td:nth-of-type(2):before { content: "Vista"; }
+            td:nth-of-type(3):before { content: "Nombre"; }
+            td:nth-of-type(4):before { content: "Precio"; }
+            td:nth-of-type(5):before { content: "Categoría"; }
+            td:nth-of-type(6):before { content: "Acciones"; }
 
-        /* EL TRUCO DE LA TABLA: Convertir filas en bloques */
-        table, thead, tbody, th, td, tr {
-            display: block;
+            .btn-edit, .btn-delete { width: 45% !important; display: inline-block !important; margin-top: 10px; }
+            #btn-volver { position: static; display: block; width: 100%; margin-bottom: 20px; text-align: center; }
         }
-
-        thead tr {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-        }
-
-        tr {
-            border: 1px solid #ddd;
-            margin-bottom: 15px;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        td {
-            border: none;
-            position: relative;
-            padding-left: 50% !important;
-            text-align: right;
-        }
-
-        /* Añadimos etiquetas para saber qué es cada dato */
-        td:before {
-            position: absolute;
-            left: 10px;
-            width: 45%;
-            padding-right: 10px;
-            white-space: nowrap;
-            text-align: left;
-            font-weight: bold;
-            color: #d4af37;
-        }
-
-        /* Etiquetas de cada columna */
-        td:nth-of-type(1):before { content: "ID"; }
-        td:nth-of-type(2):before { content: "Vista"; }
-        td:nth-of-type(3):before { content: "Nombre"; }
-        td:nth-of-type(4):before { content: "Precio"; }
-        td:nth-of-type(5):before { content: "Categoría"; }
-        td:nth-of-type(6):before { content: "Acciones"; }
-
-        .btn-edit, .btn-delete {
-            width: 45% !important;
-            display: inline-block !important;
-            margin-top: 10px;
-        }
-
-        #btn-volver {
-            position: static; /* En móvil es mejor que no flote sobre el contenido */
-            display: block;
-            width: 100%;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-    }
     </style>
 </head>
 <body>
     <button id="btn-volver" onclick="volverTienda()" class="btn-volver">
         ← Volver a la Tienda
     </button>
+    
     <div id="admin-auth" class="login-overlay">
         <div class="login-box">
             <h2 style="color:#d4af37; margin-bottom:20px;">Acceso Restringido</h2>
@@ -150,15 +97,25 @@
         </div>
         
         <div class="form-group" id="form-producto">
-            <h3 id="form-title">Añadir Nuevo Producto</h3>
-            <input type="hidden" id="edit-id"> <input type="text" id="p-nombre" placeholder="Nombre del Producto" style="width:300px;">
-            <input type="number" id="p-precio" placeholder="Precio (€)" step="0.01">
-            <select id="p-cat">
-                <option value="joyeria">Joyería</option>
-                <option value="perfumes">Perfumes</option>
-                <option value="faciales">Lociones Faciales</option>
-                <option value="corporal">Lociones Corporales</option>
-            </select>
+            <h3 id="form-title" style="margin-top:0;">Añadir Nuevo Producto</h3>
+            <input type="hidden" id="edit-id"> 
+            
+            <div class="form-row">
+                <input type="text" id="p-nombre" placeholder="Nombre del Producto" style="flex: 2; min-width: 200px;">
+                <input type="number" id="p-precio" placeholder="Precio (€)" step="0.01" style="flex: 1; min-width: 100px;">
+                <select id="p-cat" style="flex: 1; min-width: 150px;">
+                    <option value="joyeria">Joyería</option>
+                    <option value="perfumes">Perfumes</option>
+                    <option value="faciales">Lociones Faciales</option>
+                    <option value="corporal">Lociones Corporales</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 20px;" id="file-uploader-box">
+                <label for="p-foto" style="display:block; font-weight:600; margin-bottom:5px; font-size:14px;">Foto del Producto:</label>
+                <input type="file" id="p-foto" accept="image/*">
+            </div>
+            
             <button class="btn-add" id="btn-confirmar" onclick="gestionarProducto('add')">Confirmar Registro</button>
             <button id="btn-cancelar" onclick="limpiarFormulario()" style="display:none; background:#999; color:white;">Cancelar</button>
         </div>
@@ -174,10 +131,10 @@
     </div>
 
     <footer>
-        <p>Puede que tarde un tiempo en cargar el inventario</p>
+        <p style="text-align:center; color:#888; font-size:12px; margin-top:30px;">Puede que tarde un tiempo en cargar el inventario</p>
     </footer>
+
     <script>
-        
         function volverTienda() {
             window.location.href = "../"; 
         }
@@ -227,7 +184,7 @@
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>#${p.id}</strong></td>
-                        <td><img src="../${p.img}" width="40" style="border-radius:4px;" onerror="this.src='../img/logo.JPG'"></td>
+                        <td><img src="../${p.img}" width="40" height="40" style="border-radius:4px; object-fit:cover;" onerror="this.src='../img/logo.JPG'"></td>
                         <td>${p.nombre}</td>
                         <td>${p.precio.toFixed(2)}€</td>
                         <td>${p.categoria}</td>
@@ -241,29 +198,90 @@
         }
 
         // 3. AÑADIR / EDITAR / BORRAR
-        async function gestionarProducto(subAction, idDirecto = null) {
-            const btn = document.getElementById('btn-confirmar');
-            const id = idDirecto || document.getElementById('edit-id').value;
-            
-            const payload = {
-                action: "updateInventory",
-                subAction: subAction,
-                id: id,
-                nombre: document.getElementById('p-nombre').value,
-                precio: document.getElementById('p-precio').value,
-                categoria: document.getElementById('p-cat').value
-            };
+async function gestionarProducto(subAction, idDirecto = null) {
+    const btn = document.getElementById('btn-confirmar');
+    const id = idDirecto || document.getElementById('edit-id').value;
+    const inputFoto = document.getElementById('p-foto');
+    
+    const payload = {
+        action: "updateInventory",
+        subAction: subAction,
+        id: id,
+        nombre: document.getElementById('p-nombre').value,
+        precio: document.getElementById('p-precio').value,
+        categoria: document.getElementById('p-cat').value,
+        base64Imagen: null,
+        nombreArchivo: null
+    };
 
-            if (subAction !== 'delete' && (!payload.nombre || !payload.precio)) return alert("Rellena los datos");
+    if (subAction !== 'delete' && (!payload.nombre || !payload.precio)) return alert("Rellena los datos");
 
-            btn.disabled = true;
-            await fetch(URL_APPS_SCRIPT, { method: 'POST', body: JSON.stringify(payload) });
+    btn.disabled = true;
+    const textoOriginalBtn = btn.textContent;
+    btn.textContent = "Guardando datos...";
+
+    // Si es una inserción y hay foto, preparamos el nombre del archivo provisionalmente
+    if (subAction === 'add' && inputFoto && inputFoto.files.length > 0) {
+        payload.nombreArchivo = inputFoto.files[0].name;
+    }
+
+    try {
+        // PASO 1: Enviamos los datos del producto a Google Sheets
+        const response = await fetch(URL_APPS_SCRIPT, { 
+            method: 'POST', 
+            body: JSON.stringify(payload) 
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            // PASO 2: Si los datos se guardaron y el usuario subió una foto, enviamos la foto de forma aislada
+            if (subAction === 'add' && inputFoto && inputFoto.files.length > 0 && data.id) {
+                btn.textContent = "Subiendo imagen a GitHub...";
+                const archivo = inputFoto.files[0];
+                const base64Clean = await convertirArchivoABase64(archivo);
+
+                // Enviamos una segunda petición exclusiva para la imagen vinculada al nuevo ID creado
+                await fetch(URL_APPS_SCRIPT, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: "uploadImageOnly",
+                        id: data.id,
+                        nombreArchivo: archivo.name,
+                        base64Imagen: base64Clean
+                    })
+                });
+            }
             
-            alert("Inventario actualizado correctamente");
-            limpiarFormulario();
-            cargarProductosAdmin();
-            btn.disabled = false;
+            alert("¡Inventario actualizado correctamente en LENATURIQUE!");
+        } else {
+            alert("Error en la operación: " + (data.msg || "Desconocido"));
         }
+    } catch (e) {
+        console.error(e);
+        alert("Error de conexión al guardar.");
+    }
+    
+    limpiarFormulario();
+    cargarProductosAdmin();
+    btn.disabled = false;
+    btn.textContent = textoOriginalBtn;
+}
+
+        // FUNCIÓN AUXILIAR: Transforma la imagen elegida en Base64
+function convertirArchivoABase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            // Quitamos el encabezado de datos del archivo
+            let base64Limpio = reader.result.split(',')[1];
+            // Filtramos saltos de línea o retornos de carro que corrompen la API de GitHub
+            base64Limpio = base64Limpio.replace(/\r?\n|\r/g, "");
+            resolve(base64Limpio);
+        };
+        reader.onerror = error => reject(error);
+    });
+}
 
         // 4. MODO EDICIÓN
         function prepararEdicion(id, nombre, precio, cat) {
@@ -272,6 +290,9 @@
             document.getElementById('p-nombre').value = nombre;
             document.getElementById('p-precio').value = precio;
             document.getElementById('p-cat').value = cat;
+            
+            // Ocultamos el campo de fotos en edición para evitar confusiones
+            document.getElementById('file-uploader-box').style.display = "none";
             
             const btn = document.getElementById('btn-confirmar');
             btn.textContent = "Guardar Cambios";
@@ -286,9 +307,13 @@
             document.getElementById('edit-id').value = "";
             document.getElementById('p-nombre').value = "";
             document.getElementById('p-precio').value = "";
-            document.getElementById('btn-confirmar').textContent = "Confirmar Registro";
-            document.getElementById('btn-confirmar').className = "btn-add";
-            document.getElementById('btn-confirmar').onclick = () => gestionarProducto('add');
+            document.getElementById('p-foto').value = ""; // Limpia el archivo cargado
+            document.getElementById('file-uploader-box').style.display = "block"; // Volver a mostrar
+            
+            const btn = document.getElementById('btn-confirmar');
+            btn.textContent = "Confirmar Registro";
+            btn.className = "btn-add";
+            btn.onclick = () => gestionarProducto('add');
             document.getElementById('btn-cancelar').style.display = "none";
         }
     </script>
