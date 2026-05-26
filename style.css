@@ -637,3 +637,52 @@ input[type=number] {
     color: #27ae60;
     font-weight: bold;
 }
+
+/* --- ESTILOS DEL FOOTER GENERAL --- */
+.main-footer {
+    background-color: #1a1a1a; /* Fondo oscuro elegante */
+    color: #999999;
+    padding: 25px 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    border-top: 2px solid #d4af37; /* Línea dorada superior que combina con la marca */
+    margin-top: 50px; /* Espacio para que no quede pegado al contenido */
+}
+
+.footer-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.main-footer p {
+    margin: 0;
+}
+
+.main-footer .credits {
+    font-weight: 400;
+}
+
+.main-footer a {
+    color: #d4af37; /* Nombre de tu estudio en dorado */
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.main-footer a:hover {
+    color: #ffffff; /* Al pasar el ratón se vuelve blanco brillante */
+    text-shadow: 0 0 5px rgba(255,255,255,0.3);
+}
+
+/* Ajuste automático para pantallas de móvil */
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
