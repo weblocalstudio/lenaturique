@@ -9,6 +9,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
     <link rel="manifest" href="/favicon/site.webmanifest">
+    <link rel="stylesheet" href="../style.css">
     <style>
         body { font-family: 'Montserrat', sans-serif; background: #f4f4f4; padding: 20px; }
         .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; display: flex; justify-content: center; align-items: center; z-index: 100; }
@@ -173,115 +174,110 @@
             }
         }
 
+        // FUNCIÓN CLAVE: Normaliza y traduce los enlaces pesados de Google Drive a renderizado estático directo
+        function normalizarUrlImagen(url) {
+            if (!url) return '../img/logo.JPG';
+            if (!url.startsWith('http')) return `../${url}`;
+            
+            // Si detecta que es un enlace de Google (docs o drive), extrae el ID de la foto y monta el visor directo unthrottled
+            if (url.includes('google.com')) {
+                const matchId = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
+                if (matchId && matchId[1]) {
+                    return `https://lh3.googleusercontent.com/d/${matchId[1]}`;
+                }
+            }
+            return url;
+        }
+
         // 2. CARGAR TABLA
         async function cargarProductosAdmin() {
-            const res = await fetch(URL_APPS_SCRIPT + "?action=getProducts");
-            const productos = await res.json();
-            const tbody = document.getElementById('lista-productos');
-            tbody.innerHTML = "";
+            try {
+                const res = await fetch(URL_APPS_SCRIPT + "?action=getProducts");
+                const productos = await res.json();
+                const tbody = document.getElementById('lista-productos');
+                tbody.innerHTML = "";
 
-            productos.forEach(p => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>#${p.id}</strong></td>
-                        <td><img src="../${p.img}" width="40" height="40" style="border-radius:4px; object-fit:cover;" onerror="this.src='../img/logo.JPG'"></td>
-                        <td>${p.nombre}</td>
-                        <td>${p.precio.toFixed(2)}€</td>
-                        <td>${p.categoria}</td>
-                        <td>
-                            <button class="btn-edit" onclick="prepararEdicion(${p.id}, '${p.nombre}', ${p.precio}, '${p.categoria}')">Editar</button>
-                            <button class="btn-delete" onclick="gestionarProducto('delete', ${p.id})">Borrar</button>
-                        </td>
-                    </tr>
-                `;
-            });
+                productos.forEach(p => {
+                    // Pasamos la URL por el traductor estático inteligente de Google
+                    const urlImagenCompleta = normalizarUrlImagen(p.img);
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>#${p.id}</strong></td>
+                            <td><img src="${urlImagenCompleta}" width="40" height="40" style="border-radius:4px; object-fit:cover;" onerror="this.src='../img/logo.JPG'"></td>
+                            <td>${p.nombre}</td>
+                            <td>${p.precio.toFixed(2)}€</td>
+                            <td>${p.categoria}</td>
+                            <td>
+                                <button class="btn-edit" onclick="prepararEdicion(${p.id}, '${p.nombre.replace(/'/g, "\\'")}', ${p.precio}, '${p.categoria}')">Editar</button>
+                                <button class="btn-delete" onclick="gestionarProducto('delete', ${p.id})">Borrar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error("Error al renderizar los productos:", error);
+            }
         }
 
         // 3. AÑADIR / EDITAR / BORRAR
-async function gestionarProducto(subAction, idDirecto = null) {
-    const btn = document.getElementById('btn-confirmar');
-    const id = idDirecto || document.getElementById('edit-id').value;
-    const inputFoto = document.getElementById('p-foto');
-    
-    const payload = {
-        action: "updateInventory",
-        subAction: subAction,
-        id: id,
-        nombre: document.getElementById('p-nombre').value,
-        precio: document.getElementById('p-precio').value,
-        categoria: document.getElementById('p-cat').value,
-        base64Imagen: null,
-        nombreArchivo: null
-    };
+        async function gestionarProducto(subAction, idDirecto = null) {
+            const btn = document.getElementById('btn-confirmar');
+            const id = idDirecto || document.getElementById('edit-id').value;
+            const inputFoto = document.getElementById('p-foto');
+            
+            const payload = {
+                action: "updateInventory",
+                subAction: subAction,
+                id: id,
+                nombre: document.getElementById('p-nombre').value,
+                precio: document.getElementById('p-precio').value,
+                categoria: document.getElementById('p-cat').value,
+                base64Imagen: null
+            };
 
-    if (subAction !== 'delete' && (!payload.nombre || !payload.precio)) return alert("Rellena los datos");
+            if (subAction !== 'delete' && (!payload.nombre || !payload.precio)) return alert("Rellena los datos");
 
-    btn.disabled = true;
-    const textoOriginalBtn = btn.textContent;
-    btn.textContent = "Guardando datos...";
+            btn.disabled = true;
+            const textoOriginalBtn = btn.textContent;
+            btn.textContent = "Guardando...";
 
-    // Si es una inserción y hay foto, preparamos el nombre del archivo provisionalmente
-    if (subAction === 'add' && inputFoto && inputFoto.files.length > 0) {
-        payload.nombreArchivo = inputFoto.files[0].name;
-    }
+            try {
+                if (subAction === 'add' && inputFoto && inputFoto.files.length > 0) {
+                    const archivo = inputFoto.files[0];
+                    payload.base64Imagen = await convertirArchivoABase64(archivo);
+                }
 
-    try {
-        // PASO 1: Enviamos los datos del producto a Google Sheets
-        const response = await fetch(URL_APPS_SCRIPT, { 
-            method: 'POST', 
-            body: JSON.stringify(payload) 
-        });
-        const data = await response.json();
-        
-        if (data.success) {
-            // PASO 2: Si los datos se guardaron y el usuario subió una foto, enviamos la foto de forma aislada
-            if (subAction === 'add' && inputFoto && inputFoto.files.length > 0 && data.id) {
-                btn.textContent = "Subiendo imagen a GitHub...";
-                const archivo = inputFoto.files[0];
-                const base64Clean = await convertirArchivoABase64(archivo);
-
-                // Enviamos una segunda petición exclusiva para la imagen vinculada al nuevo ID creado
-                await fetch(URL_APPS_SCRIPT, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: "uploadImageOnly",
-                        id: data.id,
-                        nombreArchivo: archivo.name,
-                        base64Imagen: base64Clean
-                    })
+                const response = await fetch(URL_APPS_SCRIPT, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
                 });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert("¡Inventario actualizado correctamente!");
+                } else {
+                    alert("Error del servidor: " + (data.msg || "Desconocido"));
+                }
+            } catch (e) {
+                console.error("Fallo de red o estructura:", e);
+                alert("Error de conexión al guardar.");
             }
             
-            alert("¡Inventario actualizado correctamente en LENATURIQUE!");
-        } else {
-            alert("Error en la operación: " + (data.msg || "Desconocido"));
+            limpiarFormulario();
+            cargarProductosAdmin();
+            btn.disabled = false;
+            btn.textContent = textoOriginalBtn;
         }
-    } catch (e) {
-        console.error(e);
-        alert("Error de conexión al guardar.");
-    }
-    
-    limpiarFormulario();
-    cargarProductosAdmin();
-    btn.disabled = false;
-    btn.textContent = textoOriginalBtn;
-}
 
-        // FUNCIÓN AUXILIAR: Transforma la imagen elegida en Base64
-function convertirArchivoABase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => {
-            // Quitamos el encabezado de datos del archivo
-            let base64Limpio = reader.result.split(',')[1];
-            // Filtramos saltos de línea o retornos de carro que corrompen la API de GitHub
-            base64Limpio = base64Limpio.replace(/\r?\n|\r/g, "");
-            resolve(base64Limpio);
-        };
-        reader.onerror = error => reject(error);
-    });
-}
+        function convertirArchivoABase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file); 
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
 
         // 4. MODO EDICIÓN
         function prepararEdicion(id, nombre, precio, cat) {
@@ -291,7 +287,6 @@ function convertirArchivoABase64(file) {
             document.getElementById('p-precio').value = precio;
             document.getElementById('p-cat').value = cat;
             
-            // Ocultamos el campo de fotos en edición para evitar confusiones
             document.getElementById('file-uploader-box').style.display = "none";
             
             const btn = document.getElementById('btn-confirmar');
@@ -307,8 +302,8 @@ function convertirArchivoABase64(file) {
             document.getElementById('edit-id').value = "";
             document.getElementById('p-nombre').value = "";
             document.getElementById('p-precio').value = "";
-            document.getElementById('p-foto').value = ""; // Limpia el archivo cargado
-            document.getElementById('file-uploader-box').style.display = "block"; // Volver a mostrar
+            document.getElementById('p-foto').value = ""; 
+            document.getElementById('file-uploader-box').style.display = "block"; 
             
             const btn = document.getElementById('btn-confirmar');
             btn.textContent = "Confirmar Registro";
